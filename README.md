@@ -1,3 +1,4 @@
+Sales dashBoard
 # SuperGrads Online Sales Dashboard
 
 Internal team dashboard for online sales insights, built from the 634 report.
