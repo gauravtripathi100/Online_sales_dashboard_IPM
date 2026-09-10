@@ -10,10 +10,24 @@ type Member = {
   created_at: string;
 };
 
+type UploadSummary = {
+  month_key: string;
+  month_label: string;
+  total_rows: number;
+  included_count: number;
+  uploaded_at: string;
+  uploaded_by_name: string | null;
+};
+
 export default function AdminClient({ currentUserId }: { currentUserId: number }) {
   const [users, setUsers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [uploads, setUploads] = useState<UploadSummary[]>([]);
+  const [uploadsLoading, setUploadsLoading] = useState(true);
+  const [uploadsError, setUploadsError] = useState<string | null>(null);
+  const [deletingKey, setDeletingKey] = useState<string | null>(null);
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -38,9 +52,46 @@ export default function AdminClient({ currentUserId }: { currentUserId: number }
     }
   }, []);
 
+  const loadUploads = useCallback(async () => {
+    setUploadsLoading(true);
+    try {
+      const res = await fetch("/api/uploads");
+      const json = await res.json();
+      if (!res.ok) {
+        setUploadsError(json.error || "Could not load uploaded data.");
+        return;
+      }
+      setUploads(json.uploads);
+      setUploadsError(null);
+    } finally {
+      setUploadsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     load();
-  }, [load]);
+    loadUploads();
+  }, [load, loadUploads]);
+
+  async function handleDeleteUpload(monthKey: string, monthLabel: string) {
+    if (
+      !confirm(
+        `Delete all uploaded data for ${monthLabel}? This removes every sale record for that month permanently and can't be undone.`
+      )
+    )
+      return;
+    setDeletingKey(monthKey);
+    try {
+      const res = await fetch(`/api/uploads?monthKey=${encodeURIComponent(monthKey)}`, { method: "DELETE" });
+      if (res.ok) loadUploads();
+      else {
+        const json = await res.json();
+        alert(json.error || "Could not delete this month's data.");
+      }
+    } finally {
+      setDeletingKey(null);
+    }
+  }
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
@@ -172,6 +223,57 @@ export default function AdminClient({ currentUserId }: { currentUserId: number }
                       title={u.id === currentUserId ? "You can't remove your own account" : undefined}
                     >
                       Remove
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      <div className="panel">
+        <h2 className="mono" style={{ fontSize: 14, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".07em", margin: "0 0 6px" }}>
+          Uploaded Data
+        </h2>
+        <p style={{ margin: "0 0 16px", color: "var(--muted)", fontSize: 12.5 }}>
+          Delete a month&apos;s uploaded 634 data if it was uploaded by mistake or needs to be redone. This removes every
+          sale record for that month permanently.
+        </p>
+        {uploadsError && <div className="error-msg">{uploadsError}</div>}
+        {uploadsLoading ? (
+          <div style={{ color: "var(--muted)", fontSize: 13 }}>Loading…</div>
+        ) : uploads.length === 0 ? (
+          <div style={{ color: "var(--muted-dim)", fontSize: 13 }}>No data uploaded yet.</div>
+        ) : (
+          <table className="data">
+            <thead>
+              <tr>
+                <th>Month</th>
+                <th>Sales Counted</th>
+                <th>Uploaded By</th>
+                <th>Uploaded At</th>
+                <th style={{ textAlign: "right" }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {uploads.map((u) => (
+                <tr key={u.month_key}>
+                  <td style={{ fontWeight: 600 }}>{u.month_label}</td>
+                  <td className="mono">
+                    {u.included_count} / {u.total_rows} rows
+                  </td>
+                  <td>{u.uploaded_by_name || <span style={{ color: "var(--muted-dim)" }}>Unknown</span>}</td>
+                  <td className="mono" style={{ color: "var(--muted)" }}>
+                    {new Date(u.uploaded_at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
+                  </td>
+                  <td style={{ textAlign: "right" }}>
+                    <button
+                      className="btn danger sm"
+                      onClick={() => handleDeleteUpload(u.month_key, u.month_label)}
+                      disabled={deletingKey === u.month_key}
+                    >
+                      {deletingKey === u.month_key ? "Deleting…" : "Delete Month"}
                     </button>
                   </td>
                 </tr>
