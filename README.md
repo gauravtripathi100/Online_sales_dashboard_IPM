@@ -1,4 +1,4 @@
-Sales dashBoard
+Sales dashBoard IPM Online
 # SuperGrads Online Sales Dashboard
 
 Internal team dashboard for online sales insights, built from the 634 report.
