@@ -3,9 +3,13 @@ import { getSession } from "@/lib/auth";
 import { query } from "@/lib/db";
 import { computeAggregates, SaleRowDB } from "@/lib/salesLogic";
 
-async function loadMonth(monthKey: string, filters: { state?: string; offering?: string; course?: string }) {
-  const conditions = ["month_key = $1"];
-  const params: any[] = [monthKey];
+async function loadMonth(
+  monthKey: string,
+  channel: "online" | "offline",
+  filters: { state?: string; offering?: string; course?: string }
+) {
+  const conditions = ["month_key = $1", "channel = $2"];
+  const params: any[] = [monthKey, channel];
   if (filters.state) {
     params.push(filters.state);
     conditions.push(`state = $${params.length}`);
@@ -50,16 +54,18 @@ export async function GET(req: NextRequest) {
   const state = searchParams.get("state") || undefined;
   const offering = searchParams.get("offering") || undefined;
   const course = searchParams.get("course") || undefined;
+  const channelParam = searchParams.get("channel");
+  const channel: "online" | "offline" = channelParam === "offline" ? "offline" : "online";
 
   if (!month) {
     return NextResponse.json({ error: "Missing required 'month' query param." }, { status: 400 });
   }
 
   try {
-    const current = await loadMonth(month, { state, offering, course });
+    const current = await loadMonth(month, channel, { state, offering, course });
     let previous = null;
     if (compareMonth) {
-      previous = await loadMonth(compareMonth, { state, offering, course });
+      previous = await loadMonth(compareMonth, channel, { state, offering, course });
     }
     return NextResponse.json({ current, previous });
   } catch (err: any) {
