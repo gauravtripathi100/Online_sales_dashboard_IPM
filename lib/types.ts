@@ -7,6 +7,8 @@ export type Aggregates = {
   courseAgg: { name: string; sum: number; count: number }[];
   offeringAgg: { name: string; sum: number; count: number }[];
   stateAgg: { name: string; count: number }[];
+  centerAgg: { name: string; sum: number; count: number }[];
+  posTypeAgg: { name: string; sum: number; count: number }[];
 };
 
 export type UploadMeta = {
