@@ -144,7 +144,7 @@ export default function DashboardClient() {
 
           {data.current.meta && (
             <div className="mono" style={{ fontSize: 11, color: "var(--muted-dim)", lineHeight: 1.7 }}>
-              {`> ${data.current.meta.month_label}: ${data.current.meta.total_rows} rows → ${data.current.meta.excluded_offline} offline excluded, ${data.current.meta.excluded_zero} zero-value excluded → ${data.current.meta.included_count} counted`}
+              {`> ${data.current.meta.month_label}: ${data.current.meta.total_rows} rows → ${data.current.meta.excluded_offline} offline excluded, ${data.current.meta.excluded_zero} low-value (≤₹100) excluded → ${data.current.meta.included_count} counted`}
               {loading ? " · refreshing…" : ""}
             </div>
           )}
