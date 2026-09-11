@@ -8,6 +8,8 @@ export type IncludedRow = {
   state: string;
   net: number;
   date: Date | null;
+  centre: string;
+  posType: string;
 };
 
 export type ProcessResult = {
@@ -113,16 +115,22 @@ export function processRows(
     }
     if (!isOnline) {
       excludedOffline++;
-      // Also capture genuine offline-center sales (COCO/FOFO) so the same
-      // upload can power an Offline Revenue dashboard later, without needing
-      // to re-upload this file. Same low-value threshold applied for now.
-      if ((pos === "COCO" || pos === "FOFO") && netAmt > 100) {
+      // Also capture genuine offline-center sales so the same upload can
+      // power an Offline Revenue dashboard later, without needing to
+      // re-upload this file. Offline requires POS = COCO/FOFO AND a real
+      // centre name (not blank, not "NA" — that combination means the row
+      // doesn't cleanly belong to either channel and is left out of both).
+      const rawCentre = acc.get("centre name");
+      const hasRealCentre = rawCentre.length > 0 && centre !== "NA";
+      if ((pos === "COCO" || pos === "FOFO") && hasRealCentre && netAmt > 100) {
         offline.push({
           course: acc.get("course name") || "Unspecified",
           offering: acc.get("offering type") || "Unspecified",
           state: normalizeStateName(acc.get("state") || "Unspecified"),
           net: netAmt,
           date: d,
+          centre: rawCentre,
+          posType: pos,
         });
       }
       continue;
@@ -140,12 +148,14 @@ export function processRows(
       state: normalizeStateName(acc.get("state") || "Unspecified"),
       net: netAmt,
       date: d,
+      centre: "NA",
+      posType: pos,
     });
   }
 
-  if (!included.length) {
+  if (!included.length && !offline.length) {
     throw new Error(
-      "No online sales rows survived the filters (POS=Online/HO Support + Centre=NA + NET Amount>₹100). Check the file contents."
+      "No sales rows survived the filters (online: POS=Online/HO Support + Centre=NA; offline: POS=COCO/FOFO + a real centre name — both also require NET Amount>₹100). Check the file contents."
     );
   }
 
@@ -180,6 +190,8 @@ export type SaleRowDB = {
   state: string;
   net_amount: string | number;
   enrollment_date: string | null;
+  centre_name: string | null;
+  pos_type: string | null;
 };
 
 export type Aggregates = {
@@ -191,6 +203,8 @@ export type Aggregates = {
   courseAgg: { name: string; sum: number; count: number }[];
   offeringAgg: { name: string; sum: number; count: number }[];
   stateAgg: { name: string; count: number }[];
+  centerAgg: { name: string; sum: number; count: number }[];
+  posTypeAgg: { name: string; sum: number; count: number }[];
 };
 
 export function computeAggregates(rows: SaleRowDB[]): Aggregates {
@@ -243,5 +257,7 @@ export function computeAggregates(rows: SaleRowDB[]): Aggregates {
     courseAgg: groupSum((r) => r.course),
     offeringAgg: groupSum((r) => r.offering_type),
     stateAgg: groupCount((r) => r.state),
+    centerAgg: groupSum((r) => r.centre_name || "Unspecified"),
+    posTypeAgg: groupSum((r) => r.pos_type || "Unspecified"),
   };
 }
