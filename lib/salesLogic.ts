@@ -113,7 +113,10 @@ export function processRows(
       excludedOffline++;
       continue;
     }
-    if (netAmt <= 0) {
+    // Amounts of ₹100 or less are placeholder/token transactions (demo unlocks,
+    // nominal booking fees, etc.) — not real sales, so they're excluded here
+    // alongside genuine ₹0 rows.
+    if (netAmt <= 100) {
       excludedZero++;
       continue;
     }
@@ -128,7 +131,7 @@ export function processRows(
 
   if (!included.length) {
     throw new Error(
-      "No online sales rows survived the filters (POS=Online/HO Support + Centre=NA + NET Amount>0). Check the file contents."
+      "No online sales rows survived the filters (POS=Online/HO Support + Centre=NA + NET Amount>₹100). Check the file contents."
     );
   }
 
