@@ -16,7 +16,7 @@ const CARDS = [
     kc: "var(--blue)",
     title: "Offline Revenue",
     desc: "Center-wise (COCO/FOFO) revenue and enrollments from the same uploaded report.",
-    status: "soon" as const,
+    status: "live" as const,
   },
   {
     href: "/dashboard/insights",
