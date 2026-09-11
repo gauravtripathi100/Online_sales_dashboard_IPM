@@ -44,7 +44,7 @@ export default function TopNav({ user }: { user: { name: string; role: "admin" |
             </span>
           </div>
           <nav style={{ display: "flex", gap: 18 }}>
-            <Link href="/dashboard" style={linkStyle(pathname === "/dashboard")}>
+            <Link href="/dashboard" style={linkStyle(pathname.startsWith("/dashboard"))}>
               Dashboard
             </Link>
             {user.role === "admin" && (
