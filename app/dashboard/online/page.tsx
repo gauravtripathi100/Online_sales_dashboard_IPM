@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import TopNav from "@/components/TopNav";
-import DashboardClient from "./DashboardClient";
+import RevenueDashboardClient from "@/components/RevenueDashboardClient";
 
 export default async function OnlineDashboardPage() {
   const session = await getSession();
@@ -11,7 +11,11 @@ export default async function OnlineDashboardPage() {
     <div>
       <TopNav user={{ name: session.name, role: session.role }} />
       <div className="wrap">
-        <DashboardClient />
+        <RevenueDashboardClient
+          channel="online"
+          title="SuperGrads Online Sales Dashboard"
+          description="Online enrollments only — filtered from your uploaded 634 report."
+        />
       </div>
     </div>
   );
