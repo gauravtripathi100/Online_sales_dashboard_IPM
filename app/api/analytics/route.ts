@@ -6,7 +6,7 @@ import { computeAggregates, SaleRowDB } from "@/lib/salesLogic";
 async function loadMonth(
   monthKey: string,
   channel: "online" | "offline",
-  filters: { state?: string; offering?: string; course?: string }
+  filters: { state?: string; offering?: string; course?: string; center?: string }
 ) {
   const conditions = ["month_key = $1", "channel = $2"];
   const params: any[] = [monthKey, channel];
@@ -22,8 +22,12 @@ async function loadMonth(
     params.push(filters.course);
     conditions.push(`course = $${params.length}`);
   }
+  if (filters.center) {
+    params.push(filters.center);
+    conditions.push(`centre_name = $${params.length}`);
+  }
   const rows = await query<SaleRowDB>(
-    `SELECT course, offering_type, state, net_amount, enrollment_date::text as enrollment_date
+    `SELECT course, offering_type, state, net_amount, enrollment_date::text as enrollment_date, centre_name, pos_type
      FROM sale_rows WHERE ${conditions.join(" AND ")}`,
     params
   );
@@ -54,6 +58,7 @@ export async function GET(req: NextRequest) {
   const state = searchParams.get("state") || undefined;
   const offering = searchParams.get("offering") || undefined;
   const course = searchParams.get("course") || undefined;
+  const center = searchParams.get("center") || undefined;
   const channelParam = searchParams.get("channel");
   const channel: "online" | "offline" = channelParam === "offline" ? "offline" : "online";
 
@@ -62,10 +67,10 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const current = await loadMonth(month, channel, { state, offering, course });
+    const current = await loadMonth(month, channel, { state, offering, course, center });
     let previous = null;
     if (compareMonth) {
-      previous = await loadMonth(compareMonth, channel, { state, offering, course });
+      previous = await loadMonth(compareMonth, channel, { state, offering, course, center });
     }
     return NextResponse.json({ current, previous });
   } catch (err: any) {
