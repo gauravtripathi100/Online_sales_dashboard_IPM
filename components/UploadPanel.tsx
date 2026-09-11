@@ -26,7 +26,7 @@ export default function UploadPanel({ onUploaded }: { onUploaded: (monthKey: str
         return;
       }
       setSuccess(
-        `${data.monthLabel}: ${data.totalRows} rows → ${data.excludedOffline} offline excluded, ${data.excludedZero} zero-value excluded → ${data.includedCount} online sales saved.`
+        `${data.monthLabel}: ${data.totalRows} rows → ${data.excludedOffline} offline excluded, ${data.excludedZero} low-value (≤₹100) excluded → ${data.includedCount} online sales saved.`
       );
       onUploaded(data.monthKey);
     } catch {
