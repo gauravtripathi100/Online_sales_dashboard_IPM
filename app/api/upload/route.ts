@@ -7,17 +7,17 @@ function buildInsert(uploadId: number, monthKey: string, rows: IncludedRow[], ch
   if (!rows.length) return null;
   const dateParams = rows.map((r) => (r.date ? r.date.toISOString().slice(0, 10) : null));
   const text = `
-    INSERT INTO sale_rows (upload_id, month_key, channel, course, offering_type, state, net_amount, enrollment_date)
+    INSERT INTO sale_rows (upload_id, month_key, channel, course, offering_type, state, net_amount, enrollment_date, centre_name, pos_type)
     VALUES ${rows
       .map((_, i) => {
-        const base = i * 8;
-        return `($${base + 1},$${base + 2},$${base + 3},$${base + 4},$${base + 5},$${base + 6},$${base + 7},$${base + 8})`;
+        const base = i * 10;
+        return `($${base + 1},$${base + 2},$${base + 3},$${base + 4},$${base + 5},$${base + 6},$${base + 7},$${base + 8},$${base + 9},$${base + 10})`;
       })
       .join(",")}
   `;
   const values: any[] = [];
   rows.forEach((r, i) => {
-    values.push(uploadId, monthKey, channel, r.course, r.offering, r.state, r.net, dateParams[i]);
+    values.push(uploadId, monthKey, channel, r.course, r.offering, r.state, r.net, dateParams[i], r.centre, r.posType);
   });
   return { text, values };
 }
