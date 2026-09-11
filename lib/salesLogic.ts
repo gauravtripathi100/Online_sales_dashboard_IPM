@@ -17,6 +17,7 @@ export type ProcessResult = {
   excludedOffline: number;
   excludedZero: number;
   includedRows: IncludedRow[];
+  offlineRows: IncludedRow[];
 };
 
 const REQUIRED_KEYS = [
@@ -94,6 +95,7 @@ export function processRows(
   let excludedOffline = 0;
   let excludedZero = 0;
   const included: IncludedRow[] = [];
+  const offline: IncludedRow[] = [];
   const monthCounts: Record<string, number> = {};
 
   for (const raw of rawRows) {
@@ -111,6 +113,18 @@ export function processRows(
     }
     if (!isOnline) {
       excludedOffline++;
+      // Also capture genuine offline-center sales (COCO/FOFO) so the same
+      // upload can power an Offline Revenue dashboard later, without needing
+      // to re-upload this file. Same low-value threshold applied for now.
+      if ((pos === "COCO" || pos === "FOFO") && netAmt > 100) {
+        offline.push({
+          course: acc.get("course name") || "Unspecified",
+          offering: acc.get("offering type") || "Unspecified",
+          state: normalizeStateName(acc.get("state") || "Unspecified"),
+          net: netAmt,
+          date: d,
+        });
+      }
       continue;
     }
     // Amounts of ₹100 or less are placeholder/token transactions (demo unlocks,
@@ -155,7 +169,7 @@ export function processRows(
   if (!monthKey) monthKey = "unknown";
   if (!monthLabel) monthLabel = "Unlabeled period";
 
-  return { monthKey, monthLabel, totalRows, excludedOffline, excludedZero, includedRows: included };
+  return { monthKey, monthLabel, totalRows, excludedOffline, excludedZero, includedRows: included, offlineRows: offline };
 }
 
 // ---- Aggregation helpers used by the analytics API (operate on DB rows) ----
