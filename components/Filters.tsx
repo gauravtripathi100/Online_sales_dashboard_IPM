@@ -8,6 +8,7 @@ export type FilterState = {
   state: string;
   offering: string;
   course: string;
+  center: string;
 };
 
 export default function Filters({
@@ -17,6 +18,7 @@ export default function Filters({
   stateOptions,
   offeringOptions,
   courseOptions,
+  centerOptions,
 }: {
   months: MonthEntry[];
   filters: FilterState;
@@ -24,18 +26,20 @@ export default function Filters({
   stateOptions: string[];
   offeringOptions: string[];
   courseOptions: string[];
+  centerOptions?: string[];
 }) {
   function set<K extends keyof FilterState>(key: K, value: string) {
     onChange({ ...filters, [key]: value });
   }
 
-  const selectStyle: React.CSSProperties = {};
+  const showCenter = !!centerOptions && centerOptions.length > 0;
+  const hasAnyFilter = filters.state || filters.offering || filters.course || filters.center;
 
   return (
     <div className="panel" style={{ display: "flex", gap: 16, flexWrap: "wrap", alignItems: "flex-end" }}>
       <div className="field" style={{ minWidth: 170 }}>
         <label>Month</label>
-        <select value={filters.month} onChange={(e) => set("month", e.target.value)} style={selectStyle}>
+        <select value={filters.month} onChange={(e) => set("month", e.target.value)}>
           {months.map((m) => (
             <option key={m.month_key} value={m.month_key}>
               {m.month_label}
@@ -78,6 +82,19 @@ export default function Filters({
           ))}
         </select>
       </div>
+      {showCenter && (
+        <div className="field" style={{ minWidth: 190 }}>
+          <label>Center</label>
+          <select value={filters.center} onChange={(e) => set("center", e.target.value)}>
+            <option value="">All Centers</option>
+            {centerOptions!.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
       <div className="field" style={{ minWidth: 220, flex: 1 }}>
         <label>Course</label>
         <select value={filters.course} onChange={(e) => set("course", e.target.value)}>
@@ -89,10 +106,10 @@ export default function Filters({
           ))}
         </select>
       </div>
-      {(filters.state || filters.offering || filters.course) && (
+      {hasAnyFilter && (
         <button
           className="btn ghost sm"
-          onClick={() => onChange({ ...filters, state: "", offering: "", course: "" })}
+          onClick={() => onChange({ ...filters, state: "", offering: "", course: "", center: "" })}
         >
           Clear Filters
         </button>
