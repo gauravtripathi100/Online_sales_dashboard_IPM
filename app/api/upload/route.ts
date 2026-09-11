@@ -1,7 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { query, pool } from "@/lib/db";
-import { parseFileBuffer, processRows } from "@/lib/salesLogic";
+import { parseFileBuffer, processRows, IncludedRow } from "@/lib/salesLogic";
+
+function buildInsert(uploadId: number, monthKey: string, rows: IncludedRow[], channel: "online" | "offline") {
+  if (!rows.length) return null;
+  const dateParams = rows.map((r) => (r.date ? r.date.toISOString().slice(0, 10) : null));
+  const text = `
+    INSERT INTO sale_rows (upload_id, month_key, channel, course, offering_type, state, net_amount, enrollment_date)
+    VALUES ${rows
+      .map((_, i) => {
+        const base = i * 8;
+        return `($${base + 1},$${base + 2},$${base + 3},$${base + 4},$${base + 5},$${base + 6},$${base + 7},$${base + 8})`;
+      })
+      .join(",")}
+  `;
+  const values: any[] = [];
+  rows.forEach((r, i) => {
+    values.push(uploadId, monthKey, channel, r.course, r.offering, r.state, r.net, dateParams[i]);
+  });
+  return { text, values };
+}
 
 export async function POST(req: NextRequest) {
   const session = await getSession();
@@ -42,35 +61,14 @@ export async function POST(req: NextRequest) {
       );
       const uploadId = uploadRows.rows[0].id;
 
-      // Replace any existing rows for this month so re-uploads don't double-count.
+      // Replace any existing rows for this month (both channels) so re-uploads don't double-count.
       await client.query("DELETE FROM sale_rows WHERE month_key = $1", [result.monthKey]);
 
-      const dateParams: (string | null)[] = result.includedRows.map((r) =>
-        r.date ? r.date.toISOString().slice(0, 10) : null
-      );
+      const onlineInsert = buildInsert(uploadId, result.monthKey, result.includedRows, "online");
+      if (onlineInsert) await client.query(onlineInsert.text, onlineInsert.values);
 
-      const insertText = `
-        INSERT INTO sale_rows (upload_id, month_key, course, offering_type, state, net_amount, enrollment_date)
-        VALUES ${result.includedRows
-          .map((_, i) => {
-            const base = i * 7;
-            return `($${base + 1},$${base + 2},$${base + 3},$${base + 4},$${base + 5},$${base + 6},$${base + 7})`;
-          })
-          .join(",")}
-      `;
-      const insertValues: any[] = [];
-      result.includedRows.forEach((r, i) => {
-        insertValues.push(
-          uploadId,
-          result.monthKey,
-          r.course,
-          r.offering,
-          r.state,
-          r.net,
-          dateParams[i]
-        );
-      });
-      await client.query(insertText, insertValues);
+      const offlineInsert = buildInsert(uploadId, result.monthKey, result.offlineRows, "offline");
+      if (offlineInsert) await client.query(offlineInsert.text, offlineInsert.values);
 
       await client.query("COMMIT");
     } catch (err) {
@@ -87,6 +85,7 @@ export async function POST(req: NextRequest) {
       excludedOffline: result.excludedOffline,
       excludedZero: result.excludedZero,
       includedCount: result.includedRows.length,
+      offlineCount: result.offlineRows.length,
     });
   } catch (err: any) {
     return NextResponse.json({ error: err.message || "Upload failed." }, { status: 500 });
