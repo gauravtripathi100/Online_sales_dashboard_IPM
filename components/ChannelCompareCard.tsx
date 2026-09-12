@@ -20,7 +20,7 @@ export default function ChannelCompareTable({
   const rows: [string, string, string, string][] = [
     ["Revenue", fmtINR(online.revenue), fmtINR(offline.revenue), fmtINR(totalRevenue)],
     ["Enrollments", fmtNum(online.count), fmtNum(offline.count), fmtNum(totalCount)],
-    ["Avg. Deal Size", fmtINR(online.avg), fmtINR(offline.avg), fmtINR(totalRevenue / (totalCount || 1))],
+    ["ARPU", fmtINR(online.avg), fmtINR(offline.avg), fmtINR(totalRevenue / (totalCount || 1))],
     ["Revenue Share", `${onlineShare}%`, `${offlineShare}%`, "100%"],
   ];
 
