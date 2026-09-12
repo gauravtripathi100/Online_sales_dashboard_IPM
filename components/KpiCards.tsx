@@ -49,12 +49,21 @@ function Card({ label, value, kc, deltaInfo, sub }: { label: string; value: stri
   );
 }
 
-export default function KpiCards({ current, previous }: { current: Aggregates; previous?: Aggregates | null }) {
+export default function KpiCards({
+  current,
+  previous,
+  channel = "online",
+}: {
+  current: Aggregates;
+  previous?: Aggregates | null;
+  channel?: "online" | "offline";
+}) {
+  const revenueLabel = channel === "offline" ? "Offline Revenue" : "Online Revenue";
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
-      <Card label="Online Revenue" value={fmtINR(current.revenue)} kc="var(--purple)" deltaInfo={delta(current.revenue, previous?.revenue)} />
+      <Card label={revenueLabel} value={fmtINR(current.revenue)} kc="var(--purple)" deltaInfo={delta(current.revenue, previous?.revenue)} />
       <Card label="Enrollments" value={fmtNum(current.count)} kc="var(--blue)" deltaInfo={delta(current.count, previous?.count)} />
-      <Card label="Avg. Deal Size" value={fmtINR(current.avg)} kc="var(--green)" deltaInfo={delta(current.avg, previous?.avg)} />
+      <Card label="ARPU" value={fmtINR(current.avg)} kc="var(--green)" deltaInfo={delta(current.avg, previous?.avg)} />
       <Card label="Daily Pace" value={fmtINR(current.pace) + "/day"} kc="var(--yellow)" sub="₹ per day" />
     </div>
   );
