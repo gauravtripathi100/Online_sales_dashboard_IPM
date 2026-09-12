@@ -3,7 +3,8 @@ import { getSession } from "@/lib/auth";
 import TopNav from "@/components/TopNav";
 import Link from "next/link";
 
-const CARDS = [
+type CardStatus = "live" | "soon";
+const CARDS: { href: string; kc: string; title: string; desc: string; status: CardStatus }[] = [
   {
     href: "/dashboard/online",
     kc: "var(--purple)",
@@ -21,9 +22,9 @@ const CARDS = [
   {
     href: "/dashboard/insights",
     kc: "var(--yellow)",
-    title: "Targets & Trends",
-    desc: "Monthly Target vs Achieved, YTD, YoY comparison, and MTD revenue & numbers.",
-    status: "soon" as const,
+    title: "Product Dashboard",
+    desc: "Unit sold, revenue, and ARPU by product (1 Year, 2 Year, Dropper, Test Series, etc.) — classified from Course Name, split Online/Offline.",
+    status: "live" as const,
   },
 ];
 
