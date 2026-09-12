@@ -3,6 +3,11 @@ import * as XLSX from "xlsx";
 import { normalizeStateName } from "./stateNames";
 import { classifyProduct, ProductRow } from "./productLogic";
 
+// ARPU is only meaningful over real course batches. Cheap, high-volume add-ons
+// (Test Series, GMB, Interview Prep, Study Material, Early Bird) and unclassified
+// rows ("Others") would otherwise drag a blended ARPU down to something misleading.
+const GOLD_PRODUCTS = new Set(["1 Year", "2 Year", "Dropper", "Crash", "Self Paced", "IIM B/IIM K"]);
+
 export type IncludedRow = {
   course: string;
   offering: string;
@@ -220,6 +225,8 @@ export type Aggregates = {
   revenue: number;
   count: number;
   avg: number;
+  goldRevenue: number;
+  goldCount: number;
   pace: number;
   daySpan: number;
   courseAgg: { name: string; sum: number; count: number }[];
@@ -233,7 +240,20 @@ export function computeAggregates(rows: SaleRowDB[]): Aggregates {
   const nets = rows.map((r) => Number(r.net_amount));
   const revenue = nets.reduce((s, v) => s + v, 0);
   const count = rows.length;
-  const avg = count ? revenue / count : 0;
+
+  // ARPU ("avg") is computed only over Gold-classified rows — a different,
+  // narrower numerator and denominator than the overall revenue/count above,
+  // which stay as full totals across every product.
+  let goldRevenue = 0;
+  let goldCount = 0;
+  rows.forEach((r) => {
+    const { product } = classifyProduct(r.course);
+    if (GOLD_PRODUCTS.has(product)) {
+      goldRevenue += Number(r.net_amount);
+      goldCount += 1;
+    }
+  });
+  const avg = goldCount ? goldRevenue / goldCount : 0;
 
   const dates = rows
     .map((r) => (r.enrollment_date ? new Date(r.enrollment_date) : null))
@@ -274,6 +294,8 @@ export function computeAggregates(rows: SaleRowDB[]): Aggregates {
     revenue,
     count,
     avg,
+    goldRevenue,
+    goldCount,
     pace,
     daySpan,
     courseAgg: groupSum((r) => r.course),
