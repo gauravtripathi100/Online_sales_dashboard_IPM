@@ -5,8 +5,8 @@ import UploadPanel from "@/components/UploadPanel";
 import Filters, { FilterState } from "@/components/Filters";
 import KpiCards from "@/components/KpiCards";
 import RevenueBarChart from "@/components/RevenueBarChart";
-import StateHeatmap from "@/components/StateHeatmap";
 import ComparisonTable from "@/components/ComparisonTable";
+import EnrollmentBreakdown from "@/components/EnrollmentBreakdown";
 import ChannelCompareTable from "@/components/ChannelCompareCard";
 import { Aggregates, AnalyticsResponse, MonthEntry } from "@/lib/types";
 
@@ -179,7 +179,10 @@ export default function RevenueDashboardClient({
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
             <RevenueBarChart title="Revenue by Offering Type" data={data.current.aggregates.offeringAgg} limit={8} />
-            <StateHeatmap stateAgg={data.current.aggregates.stateAgg} />
+            <EnrollmentBreakdown
+              stateAgg={data.current.aggregates.stateAgg}
+              centerAgg={channel === "offline" ? data.current.aggregates.centerAgg : undefined}
+            />
           </div>
 
           {data.previous && (
