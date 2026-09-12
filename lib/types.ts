@@ -2,6 +2,8 @@ export type Aggregates = {
   revenue: number;
   count: number;
   avg: number;
+  goldRevenue: number;
+  goldCount: number;
   pace: number;
   daySpan: number;
   courseAgg: { name: string; sum: number; count: number }[];
