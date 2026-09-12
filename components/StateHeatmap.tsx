@@ -8,7 +8,6 @@ const GEO_URL = "/maps/india_states_topo.json";
 function colorFor(count: number, max: number): string {
   if (!count || max === 0) return "#1B1B26";
   const t = Math.min(1, count / max);
-  // Interpolate from muted panel color to purple accent.
   const from = { r: 0x1b, g: 0x1b, b: 0x26 };
   const to = { r: 0x7c, g: 0x5c, b: 0xfc };
   const r = Math.round(from.r + (to.r - from.r) * t);
@@ -17,7 +16,13 @@ function colorFor(count: number, max: number): string {
   return `rgb(${r},${g},${b})`;
 }
 
-export default function StateHeatmap({ stateAgg }: { stateAgg: { name: string; count: number }[] }) {
+export default function StateHeatmap({
+  stateAgg,
+  bare = false,
+}: {
+  stateAgg: { name: string; count: number }[];
+  bare?: boolean;
+}) {
   const [hover, setHover] = useState<{ name: string; count: number; x: number; y: number } | null>(null);
 
   const map = useMemo(() => {
@@ -28,11 +33,8 @@ export default function StateHeatmap({ stateAgg }: { stateAgg: { name: string; c
 
   const max = useMemo(() => Math.max(1, ...stateAgg.map((s) => s.count)), [stateAgg]);
 
-  return (
-    <div className="panel" style={{ position: "relative" }}>
-      <h2 className="mono" style={{ fontSize: 14, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".07em", margin: "0 0 16px" }}>
-        Enrollments by State
-      </h2>
+  const body = (
+    <>
       <div style={{ position: "relative" }}>
         <ComposableMap
           projection="geoMercator"
@@ -116,6 +118,17 @@ export default function StateHeatmap({ stateAgg }: { stateAgg: { name: string; c
           </div>
         ))}
       </div>
+    </>
+  );
+
+  if (bare) return body;
+
+  return (
+    <div className="panel" style={{ position: "relative" }}>
+      <h2 className="mono" style={{ fontSize: 14, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".07em", margin: "0 0 16px" }}>
+        Enrollments by State
+      </h2>
+      {body}
     </div>
   );
 }
