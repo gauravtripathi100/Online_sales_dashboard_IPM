@@ -19,6 +19,7 @@ const CHANNEL_AGNOSTIC_RULES: [string, RegExp][] = [
   ["Interview Prep Batch", /ADMITSURE|INTERVIEW PREP/],
   ["Test Series", /TEST SERIES/],
   ["Self Paced", /SWAYAM/],
+  ["Summer Bootcamp", /SUMMER BOOTCAMP/],
   ["Early Bird", /EARLY BIRD/],
 ];
 
@@ -44,6 +45,7 @@ export const PRODUCT_DISPLAY_ORDER: { product: string; channel: "online" | "offl
   { product: "GMB", channel: null },
   { product: "Test Series", channel: null },
   { product: "Interview Prep Batch", channel: null },
+  { product: "Summer Bootcamp", channel: null },
   { product: "Crash", channel: "online" },
   { product: "IIM B/IIM K", channel: "online" },
   { product: "Early Bird", channel: null },
