@@ -8,16 +8,19 @@ export default function ComparisonTable({
   currentMeta,
   previous,
   previousMeta,
+  channel = "online",
 }: {
   current: Aggregates;
   currentMeta: UploadMeta | null;
   previous: Aggregates;
   previousMeta: UploadMeta | null;
+  channel?: "online" | "offline";
 }) {
+  const revenueLabel = channel === "offline" ? "Offline Revenue" : "Online Revenue";
   const rows: [string, string, string, number | null][] = [
-    ["Online Revenue", fmtINR(previous.revenue), fmtINR(current.revenue), pct(current.revenue, previous.revenue)],
+    [revenueLabel, fmtINR(previous.revenue), fmtINR(current.revenue), pct(current.revenue, previous.revenue)],
     ["Enrollments", fmtNum(previous.count), fmtNum(current.count), pct(current.count, previous.count)],
-    ["Avg. Deal Size", fmtINR(previous.avg), fmtINR(current.avg), pct(current.avg, previous.avg)],
+    ["ARPU", fmtINR(previous.avg), fmtINR(current.avg), pct(current.avg, previous.avg)],
     ["Daily Pace (₹/day)", fmtINR(previous.pace), fmtINR(current.pace), pct(current.pace, previous.pace)],
   ];
 
