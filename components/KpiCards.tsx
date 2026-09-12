@@ -63,7 +63,7 @@ export default function KpiCards({
     <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
       <Card label={revenueLabel} value={fmtINR(current.revenue)} kc="var(--purple)" deltaInfo={delta(current.revenue, previous?.revenue)} />
       <Card label="Enrollments" value={fmtNum(current.count)} kc="var(--blue)" deltaInfo={delta(current.count, previous?.count)} />
-      <Card label="ARPU" value={fmtINR(current.avg)} kc="var(--green)" deltaInfo={delta(current.avg, previous?.avg)} />
+      <Card label="ARPU (Gold)" value={fmtINR(current.avg)} kc="var(--green)" deltaInfo={delta(current.avg, previous?.avg)} />
       <Card label="Daily Pace" value={fmtINR(current.pace) + "/day"} kc="var(--yellow)" sub="₹ per day" />
     </div>
   );
