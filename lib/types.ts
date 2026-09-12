@@ -11,6 +11,8 @@ export type Aggregates = {
   stateAgg: { name: string; count: number }[];
   centerAgg: { name: string; sum: number; count: number }[];
   posTypeAgg: { name: string; sum: number; count: number }[];
+  leadSourceAgg: { name: string; sum: number; count: number }[];
+  leadMediumAgg: { name: string; sum: number; count: number }[];
 };
 
 export type UploadMeta = {
