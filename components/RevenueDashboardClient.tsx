@@ -185,6 +185,13 @@ export default function RevenueDashboardClient({
             />
           </div>
 
+          {channel === "online" && (
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+              <RevenueBarChart title="Revenue by Lead Source" data={data.current.aggregates.leadSourceAgg} limit={10} />
+              <RevenueBarChart title="Revenue by Lead Medium" data={data.current.aggregates.leadMediumAgg} limit={10} />
+            </div>
+          )}
+
           {data.previous && (
             <ComparisonTable
               current={data.current.aggregates}
