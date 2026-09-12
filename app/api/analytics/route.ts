@@ -27,7 +27,7 @@ async function loadMonth(
     conditions.push(`centre_name = $${params.length}`);
   }
   const rows = await query<SaleRowDB>(
-    `SELECT course, offering_type, state, net_amount, enrollment_date::text as enrollment_date, centre_name, pos_type
+    `SELECT course, offering_type, state, net_amount, enrollment_date::text as enrollment_date, centre_name, pos_type, lead_source, lead_medium
      FROM sale_rows WHERE ${conditions.join(" AND ")}`,
     params
   );
