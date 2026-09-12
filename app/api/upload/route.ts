@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { query, pool } from "@/lib/db";
 import { parseFileBuffer, processRows, IncludedRow } from "@/lib/salesLogic";
+import { ProductRow } from "@/lib/productLogic";
 
 function buildInsert(uploadId: number, monthKey: string, rows: IncludedRow[], channel: "online" | "offline") {
   if (!rows.length) return null;
@@ -18,6 +19,25 @@ function buildInsert(uploadId: number, monthKey: string, rows: IncludedRow[], ch
   const values: any[] = [];
   rows.forEach((r, i) => {
     values.push(uploadId, monthKey, channel, r.course, r.offering, r.state, r.net, dateParams[i], r.centre, r.posType);
+  });
+  return { text, values };
+}
+
+function buildProductInsert(uploadId: number, monthKey: string, rows: ProductRow[]) {
+  if (!rows.length) return null;
+  const dateParams = rows.map((r) => (r.date ? r.date.toISOString().slice(0, 10) : null));
+  const text = `
+    INSERT INTO product_rows (upload_id, month_key, product, product_channel, net_amount, enrollment_date)
+    VALUES ${rows
+      .map((_, i) => {
+        const base = i * 6;
+        return `($${base + 1},$${base + 2},$${base + 3},$${base + 4},$${base + 5},$${base + 6})`;
+      })
+      .join(",")}
+  `;
+  const values: any[] = [];
+  rows.forEach((r, i) => {
+    values.push(uploadId, monthKey, r.product, r.channel, r.net, dateParams[i]);
   });
   return { text, values };
 }
@@ -61,14 +81,18 @@ export async function POST(req: NextRequest) {
       );
       const uploadId = uploadRows.rows[0].id;
 
-      // Replace any existing rows for this month (both channels) so re-uploads don't double-count.
+      // Replace any existing rows for this month so re-uploads don't double-count.
       await client.query("DELETE FROM sale_rows WHERE month_key = $1", [result.monthKey]);
+      await client.query("DELETE FROM product_rows WHERE month_key = $1", [result.monthKey]);
 
       const onlineInsert = buildInsert(uploadId, result.monthKey, result.includedRows, "online");
       if (onlineInsert) await client.query(onlineInsert.text, onlineInsert.values);
 
       const offlineInsert = buildInsert(uploadId, result.monthKey, result.offlineRows, "offline");
       if (offlineInsert) await client.query(offlineInsert.text, offlineInsert.values);
+
+      const productInsert = buildProductInsert(uploadId, result.monthKey, result.productRows);
+      if (productInsert) await client.query(productInsert.text, productInsert.values);
 
       await client.query("COMMIT");
     } catch (err) {
@@ -86,6 +110,7 @@ export async function POST(req: NextRequest) {
       excludedZero: result.excludedZero,
       includedCount: result.includedRows.length,
       offlineCount: result.offlineRows.length,
+      productCount: result.productRows.length,
     });
   } catch (err: any) {
     return NextResponse.json({ error: err.message || "Upload failed." }, { status: 500 });
