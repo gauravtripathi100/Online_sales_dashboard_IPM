@@ -16,6 +16,8 @@ export type IncludedRow = {
   date: Date | null;
   centre: string;
   posType: string;
+  leadSource: string;
+  leadMedium: string;
 };
 
 export type ProcessResult = {
@@ -44,6 +46,21 @@ function normalizeKey(k: string): string {
 }
 function cleanVal(v: unknown): string {
   return v === undefined || v === null ? "" : String(v).trim();
+}
+
+// Lead Source/Medium values in the raw export often come wrapped in stray quote
+// characters (e.g. '"Organic"') and with inconsistent casing (e.g. "Organic" vs
+// "organic"). This strips the quotes and normalizes casing so they group together
+// cleanly, without merging genuinely distinct values (e.g. "Organic Search" stays
+// separate from "Organic").
+function cleanLabel(v: string): string {
+  const stripped = v.replace(/^["']+|["']+$/g, "").trim();
+  if (!stripped) return "Unknown";
+  return stripped
+    .toLowerCase()
+    .split(/\s+/)
+    .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
+    .join(" ");
 }
 
 function buildAccessor(rawRow: Record<string, unknown>) {
@@ -149,6 +166,8 @@ export function processRows(
           date: d,
           centre: rawCentre,
           posType: pos,
+          leadSource: cleanLabel(acc.get("lead source")),
+          leadMedium: cleanLabel(acc.get("lead medium")),
         });
       }
       continue;
@@ -168,6 +187,8 @@ export function processRows(
       date: d,
       centre: "NA",
       posType: pos,
+      leadSource: cleanLabel(acc.get("lead source")),
+      leadMedium: cleanLabel(acc.get("lead medium")),
     });
   }
 
@@ -219,6 +240,8 @@ export type SaleRowDB = {
   enrollment_date: string | null;
   centre_name: string | null;
   pos_type: string | null;
+  lead_source: string | null;
+  lead_medium: string | null;
 };
 
 export type Aggregates = {
@@ -234,6 +257,8 @@ export type Aggregates = {
   stateAgg: { name: string; count: number }[];
   centerAgg: { name: string; sum: number; count: number }[];
   posTypeAgg: { name: string; sum: number; count: number }[];
+  leadSourceAgg: { name: string; sum: number; count: number }[];
+  leadMediumAgg: { name: string; sum: number; count: number }[];
 };
 
 export function computeAggregates(rows: SaleRowDB[]): Aggregates {
@@ -303,5 +328,7 @@ export function computeAggregates(rows: SaleRowDB[]): Aggregates {
     stateAgg: groupCount((r) => r.state),
     centerAgg: groupSum((r) => r.centre_name || "Unspecified"),
     posTypeAgg: groupSum((r) => r.pos_type || "Unspecified"),
+    leadSourceAgg: groupSum((r) => r.lead_source || "Unknown"),
+    leadMediumAgg: groupSum((r) => r.lead_medium || "Unknown"),
   };
 }
