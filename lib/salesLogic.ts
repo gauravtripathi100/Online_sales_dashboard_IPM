@@ -1,6 +1,7 @@
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
 import { normalizeStateName } from "./stateNames";
+import { classifyProduct, ProductRow } from "./productLogic";
 
 export type IncludedRow = {
   course: string;
@@ -20,6 +21,7 @@ export type ProcessResult = {
   excludedZero: number;
   includedRows: IncludedRow[];
   offlineRows: IncludedRow[];
+  productRows: ProductRow[];
 };
 
 const REQUIRED_KEYS = [
@@ -98,6 +100,7 @@ export function processRows(
   let excludedZero = 0;
   const included: IncludedRow[] = [];
   const offline: IncludedRow[] = [];
+  const products: ProductRow[] = [];
   const monthCounts: Record<string, number> = {};
 
   for (const raw of rawRows) {
@@ -113,6 +116,16 @@ export function processRows(
       const mk = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
       monthCounts[mk] = (monthCounts[mk] || 0) + 1;
     }
+
+    // Product classification (for the Product Dashboard) runs independently of the
+    // Online/Offline Revenue channel logic below — it looks at every row in the file
+    // (any POS) and only requires NET Amount > ₹100, since a physical center can sell
+    // an "online" product and vice versa.
+    if (netAmt > 100) {
+      const { product, channel } = classifyProduct(acc.get("course name"));
+      products.push({ product, channel, net: netAmt, date: d });
+    }
+
     if (!isOnline) {
       excludedOffline++;
       // Also capture genuine offline-center sales so the same upload can
@@ -179,7 +192,16 @@ export function processRows(
   if (!monthKey) monthKey = "unknown";
   if (!monthLabel) monthLabel = "Unlabeled period";
 
-  return { monthKey, monthLabel, totalRows, excludedOffline, excludedZero, includedRows: included, offlineRows: offline };
+  return {
+    monthKey,
+    monthLabel,
+    totalRows,
+    excludedOffline,
+    excludedZero,
+    includedRows: included,
+    offlineRows: offline,
+    productRows: products,
+  };
 }
 
 // ---- Aggregation helpers used by the analytics API (operate on DB rows) ----
