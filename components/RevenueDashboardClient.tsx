@@ -157,7 +157,7 @@ export default function RevenueDashboardClient({
             centerOptions={centerOptions}
           />
 
-          <KpiCards current={data.current.aggregates} previous={data.previous?.aggregates} />
+          <KpiCards current={data.current.aggregates} previous={data.previous?.aggregates} channel={channel} />
 
           {channel === "offline" && otherChannelAgg && (
             <ChannelCompareTable
@@ -191,6 +191,7 @@ export default function RevenueDashboardClient({
               currentMeta={data.current.meta}
               previous={data.previous.aggregates}
               previousMeta={data.previous.meta}
+              channel={channel}
             />
           )}
 
