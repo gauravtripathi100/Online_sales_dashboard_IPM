@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import TopNav from "@/components/TopNav";
-import ComingSoon from "@/components/ComingSoon";
+import ProductDashboardClient from "@/components/ProductDashboardClient";
 
-export default async function InsightsDashboardPage() {
+export default async function ProductDashboardPage() {
   const session = await getSession();
   if (!session) redirect("/login");
 
@@ -11,10 +11,7 @@ export default async function InsightsDashboardPage() {
     <div>
       <TopNav user={{ name: session.name, role: session.role }} />
       <div className="wrap">
-        <ComingSoon
-          title="Targets & Trends"
-          description="Monthly Target vs Achieved, YTD Achieved vs Annual Target, YoY month-wise comparison, and MTD revenue & numbers — built on top of your existing uploads."
-        />
+        <ProductDashboardClient />
       </div>
     </div>
   );
