@@ -16,11 +16,16 @@ export default function ChannelCompareTable({
   const totalCount = online.count + offline.count;
   const onlineShare = totalRevenue ? ((online.revenue / totalRevenue) * 100).toFixed(1) : "0.0";
   const offlineShare = totalRevenue ? ((offline.revenue / totalRevenue) * 100).toFixed(1) : "0.0";
+  // Combined ARPU must use Gold-only revenue/count, same as each channel's own
+  // ARPU — blending with the full revenue/count here would silently reintroduce
+  // the same distortion this metric was fixed to avoid.
+  const totalGoldRevenue = online.goldRevenue + offline.goldRevenue;
+  const totalGoldCount = online.goldCount + offline.goldCount;
 
   const rows: [string, string, string, string][] = [
     ["Revenue", fmtINR(online.revenue), fmtINR(offline.revenue), fmtINR(totalRevenue)],
     ["Enrollments", fmtNum(online.count), fmtNum(offline.count), fmtNum(totalCount)],
-    ["ARPU", fmtINR(online.avg), fmtINR(offline.avg), fmtINR(totalRevenue / (totalCount || 1))],
+    ["ARPU (Gold)", fmtINR(online.avg), fmtINR(offline.avg), fmtINR(totalGoldCount ? totalGoldRevenue / totalGoldCount : 0)],
     ["Revenue Share", `${onlineShare}%`, `${offlineShare}%`, "100%"],
   ];
 
