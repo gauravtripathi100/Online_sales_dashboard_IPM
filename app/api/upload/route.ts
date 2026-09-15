@@ -8,17 +8,17 @@ function buildInsert(uploadId: number, monthKey: string, rows: IncludedRow[], ch
   if (!rows.length) return null;
   const dateParams = rows.map((r) => (r.date ? r.date.toISOString().slice(0, 10) : null));
   const text = `
-    INSERT INTO sale_rows (upload_id, month_key, channel, course, offering_type, state, net_amount, enrollment_date, centre_name, pos_type, lead_source, lead_medium)
+    INSERT INTO sale_rows (upload_id, month_key, channel, course, offering_type, state, net_amount, enrollment_date, centre_name, pos_type, lead_source, lead_medium, sales_person, student_id)
     VALUES ${rows
       .map((_, i) => {
-        const base = i * 12;
-        return `($${base + 1},$${base + 2},$${base + 3},$${base + 4},$${base + 5},$${base + 6},$${base + 7},$${base + 8},$${base + 9},$${base + 10},$${base + 11},$${base + 12})`;
+        const base = i * 14;
+        return `($${base + 1},$${base + 2},$${base + 3},$${base + 4},$${base + 5},$${base + 6},$${base + 7},$${base + 8},$${base + 9},$${base + 10},$${base + 11},$${base + 12},$${base + 13},$${base + 14})`;
       })
       .join(",")}
   `;
   const values: any[] = [];
   rows.forEach((r, i) => {
-    values.push(uploadId, monthKey, channel, r.course, r.offering, r.state, r.net, dateParams[i], r.centre, r.posType, r.leadSource, r.leadMedium);
+    values.push(uploadId, monthKey, channel, r.course, r.offering, r.state, r.net, dateParams[i], r.centre, r.posType, r.leadSource, r.leadMedium, r.salesPerson, r.studentId);
   });
   return { text, values };
 }
