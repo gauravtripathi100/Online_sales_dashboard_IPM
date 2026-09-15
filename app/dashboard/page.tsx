@@ -26,6 +26,13 @@ const CARDS: { href: string; kc: string; title: string; desc: string; status: Ca
     desc: "Unit sold, revenue, and ARPU by product (1 Year, 2 Year, Dropper, Test Series, etc.) — classified from Course Name, split Online/Offline.",
     status: "live" as const,
   },
+  {
+    href: "/dashboard/salesperson",
+    kc: "var(--green)",
+    title: "Sales Person Dashboard",
+    desc: "True sales-person-wise revenue and enrollments for online sales, matched against your LSQ export by Student ID.",
+    status: "live" as const,
+  },
 ];
 
 export default async function DashboardHubPage() {
@@ -44,7 +51,7 @@ export default async function DashboardHubPage() {
             Choose a Dashboard
           </h1>
           <p style={{ margin: 0, color: "var(--muted)", fontSize: 13.5 }}>
-            One 634 report upload powers all three — upload it once from any dashboard below.
+            One 634 report upload powers the first three — upload it once from any dashboard below.
           </p>
         </div>
 
