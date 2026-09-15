@@ -18,6 +18,8 @@ export type IncludedRow = {
   posType: string;
   leadSource: string;
   leadMedium: string;
+  salesPerson: string;
+  studentId: string;
 };
 
 export type ProcessResult = {
@@ -61,6 +63,31 @@ function cleanLabel(v: string): string {
     .split(/\s+/)
     .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
     .join(" ");
+}
+
+// Sales Person is stored as a work email (e.g. "tushar.singh@toprankers.online") or
+// "NA" when no salesperson is assigned (typically a self-serve online purchase).
+// This converts the email's local part into a readable display name.
+function cleanSalesPerson(v: string): string {
+  const stripped = v.replace(/^["']+|["']+$/g, "").trim();
+  if (!stripped || stripped.toUpperCase() === "NA") return "Unassigned";
+  const localPart = stripped.split("@")[0];
+  return localPart
+    .split(/[._]+/)
+    .filter(Boolean)
+    .map((w) => w[0].toUpperCase() + w.slice(1).toLowerCase())
+    .join(" ");
+}
+
+// Student/User IDs appear as plain integers in the 634 report (e.g. "7029705") but
+// as floats in the LSQ export (e.g. "7029705.0" or "7029705.00"). Normalizing both
+// to a plain integer string makes them reliably matchable.
+function normalizeStudentId(v: string): string {
+  const cleaned = v.replace(/^["']+|["']+$/g, "").trim();
+  if (!cleaned) return "";
+  const num = parseFloat(cleaned);
+  if (isNaN(num)) return cleaned;
+  return String(Math.round(num));
 }
 
 function buildAccessor(rawRow: Record<string, unknown>) {
@@ -168,6 +195,8 @@ export function processRows(
           posType: pos,
           leadSource: cleanLabel(acc.get("lead source")),
           leadMedium: cleanLabel(acc.get("lead medium")),
+          salesPerson: cleanSalesPerson(acc.get("sales person")),
+          studentId: normalizeStudentId(acc.get("user id")),
         });
       }
       continue;
@@ -189,6 +218,8 @@ export function processRows(
       posType: pos,
       leadSource: cleanLabel(acc.get("lead source")),
       leadMedium: cleanLabel(acc.get("lead medium")),
+      salesPerson: cleanSalesPerson(acc.get("sales person")),
+      studentId: normalizeStudentId(acc.get("user id")),
     });
   }
 
@@ -242,6 +273,7 @@ export type SaleRowDB = {
   pos_type: string | null;
   lead_source: string | null;
   lead_medium: string | null;
+  sales_person: string | null;
 };
 
 export type Aggregates = {
@@ -259,6 +291,7 @@ export type Aggregates = {
   posTypeAgg: { name: string; sum: number; count: number }[];
   leadSourceAgg: { name: string; sum: number; count: number }[];
   leadMediumAgg: { name: string; sum: number; count: number }[];
+  salesPersonAgg: { name: string; sum: number; count: number }[];
 };
 
 export function computeAggregates(rows: SaleRowDB[]): Aggregates {
@@ -330,5 +363,6 @@ export function computeAggregates(rows: SaleRowDB[]): Aggregates {
     posTypeAgg: groupSum((r) => r.pos_type || "Unspecified"),
     leadSourceAgg: groupSum((r) => r.lead_source || "Unknown"),
     leadMediumAgg: groupSum((r) => r.lead_medium || "Unknown"),
+    salesPersonAgg: groupSum((r) => r.sales_person || "Unassigned"),
   };
 }
